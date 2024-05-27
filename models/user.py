@@ -1,47 +1,51 @@
 #!/usr/bin/python3
-""" holds class User"""
-import hashlib
-import models
+"""
+User Class from Models Module
+"""
+import os
 from models.base_model import BaseModel, Base
-from os import getenv
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, String
+from sqlalchemy import Column, Integer, String, Float
+from hashlib import md5
+storage_type = os.environ.get('HBNB_TYPE_STORAGE')
 
 
 class User(BaseModel, Base):
-    """Representation of a user """
-    if getenv('HBNB_TYPE_STORAGE') == 'db':
+    """User class handles all application users"""
+    if storage_type == "db":
         __tablename__ = 'users'
-        email = Column(String(128),
-                       nullable=False)
-        _password = Column('password',
-                           String(128),
-                           nullable=False)
-        first_name = Column(String(128),
-                            nullable=True)
-        last_name = Column(String(128),
-                           nullable=True)
-        places = relationship("Place",
-                              backref="user",
-                              cascade="all, delete-orphan")
-        reviews = relationship("Review",
-                               backref="user",
-                               cascade="all, delete-orphan")
+        email = Column(String(128), nullable=False)
+        password = Column("password", String(128), nullable=False)
+        first_name = Column(String(128), nullable=True)
+        last_name = Column(String(128), nullable=True)
+
+        places = relationship('Place', backref='user', cascade='delete')
+        reviews = relationship('Review', backref='user', cascade='delete')
     else:
-        email = ""
-        _password = ""
-        first_name = ""
-        last_name = ""
+        email = ''
+        password = ''
+        first_name = ''
+        last_name = ''
 
     def __init__(self, *args, **kwargs):
-        """initializes user"""
+        """
+        initialize User Model, inherits from BaseModel
+        """
         super().__init__(*args, **kwargs)
 
     @property
     def password(self):
-        return self._password
+        """
+        getter for password
+        :return: password (hashed)
+        """
+        return self.__dict__.get("password")
 
     @password.setter
-    def password(self, pwd):
-        """hashing password values"""
-        self._password = pwd
+    def password(self, password):
+        """
+        Password setter, with md5 hasing
+        :param password: password
+        :return: nothing
+        """
+        self.__dict__["password"] = md5(password.encode('utf-8')).hexdigest()
